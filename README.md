@@ -6,4 +6,4 @@ While using this code please keep all the code .m files together.
 
 #### Reference: 
 1. https://en.wikipedia.org/wiki/Gerchberg%E2%80%93Saxton_algorithm
-2. -Optical Tweezer: Principles and Application- by Philip H. Jones, O. M. Marago and G. Volpe
+2. _Optical Tweezer: Principles and Application_ by Philip H. Jones, O. M. Marago and G. Volpe

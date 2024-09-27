@@ -25,11 +25,14 @@ This computer-generated digital hologram is projected onto the spatial light mod
 ## Usage
 **Input Beam**: 
    - Modify the radius and position of the input beam as needed by editing the code in the input beam section.
+     
 **Target Image**:
    - You will be prompted to enter the number of spots and their separation when running the code.
    - This creates a custom intensity pattern for the algorithm to shape.
+     
 **Iterations**:
    - Enter the desired number of iterations for the Gerchberg-Saxton algorithm. Typically, more iterations yield a more accurate phase mask.
+     
 **Projection**:
    - Ensure that the SLM resolution matches the size of the generated phase mask (typically set to match the resolution of the secondary monitor).
    - The phase mask will be displayed on the secondary monitor (SLM screen).

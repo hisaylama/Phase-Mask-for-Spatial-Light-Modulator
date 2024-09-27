@@ -1,149 +1,141 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Gerchberg and Saxton Algorithm for retrieveing the phase of the desired
-%intensity pattern and projecting onto the spatial light modulator
-%author - Hisay Lama
-%email ID - hisaylama@gmail.com
-%The part of the code, that includes the projection of image onto the
-%spatial light modulator is borrowed from the 'ots1.0.1' written by Volpe
-%et al.
+% Gerchberg-Saxton Algorithm for Phase Retrieval and SLM Projection
+% Author: Hisay Lama
+% Email: hisaylama@gmail.com
+% 
+% This code uses the Gerchberg-Saxton algorithm to retrieve the phase of
+% a desired intensity pattern and project it onto an SLM. The projection 
+% and display functions are borrowed from 'ots1.0.1' by Volpe et al.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear,  clc,
-close all,
-%Input beam 
-M = 800; %side length (pixel unit)
-N = 600; % side length (pixel unit)
-psize = 20e-6; %pxiel size (m)
-x=([0.5:1:M-0.5] - M/2)*psize;
-y =([0.5:1:N-0.5] - N/2)*psize;
-[X,Y]=meshgrid(x,y);
-w=250*psize; % Radius of the incident beam (px)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Input beam projected on diffracted optical element
-%u_in = circ((sqrt((X-M/4).^2 + (Y-N/4).^2))./w);
-u_in = circ((sqrt(X.^2 + Y.^2))/w); %Ampliture of the input beam
-I_in = abs(u_in.^2);
-figure(1), %irradiance image
-imagesc(x,y,I_in);
-xlabel('x (m)'); ylabel('y (m)');
-colormap('gray');
-%axis square;
-axis xy;
-%I = double(I_in);
-PH = 2.*pi.*(rand([N,M])); %Generation of the random phase
-%u_in = u_in.*exp(-1i.*PH); %Resultant input beam
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Generating the target image with only amplitude i.e. without phase
-S_L = input('Enter the number of spots =  ');
-P = input('Enter the inter-spot separation in pixel =  ');
-w = 1*psize; %radius of the spot (in pixel unit) 
-u_target = Multiple_Spot(M,N,S_L,P*psize);
-x=([0.5:1:M-0.5] - M/2)*psize;
-y =([0.5:1:N-0.5] - N/2)*psize;
-[X,Y]=meshgrid(x,y);
-I_target = abs(u_target.^2);
-figure,
-imagesc(x,y,I_target);
-%axis off;
-axis xy;
-colormap('gray'); xlabel('x (px)'); ylabel('y (px)');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Starting of the GS algorithm iteration for geenrating phase mask
-f = input('focal length = '); %focal length in pixel units
-z = 0; %distance from the focus
-lambda = 1064e-9; %input('lambda = '); %light wavelength [m]
-k = 2.*pi/lambda; %wave vector
-[fx,fy] = meshgrid((1/psize).*[-M/2:1:M/2-1]/M,(1/psize)*[-N/2:1:N/2-1]/N);%frequency size
-x1 = lambda*f*fx;
-y1 = lambda*f*fy;
-Phase_hot = PH;
-N_max = input('maximum number of iteration = ');
 
-for n = 1:N_max %number of iteration
-    Efocus = exp(1i*k*(2*f+z + x1.^2 + y1.^2))/(1i*lambda*f)...
-        .*fftshift(fft2(abs(u_in).*exp(-1j*Phase_hot).*exp((-1i*pi*z/(lambda*f^2))*(X.^2+Y.^2))));
-    %Efocus = fftshift(fft2(abs(u_in).*exp(-1j*Phase_hot).*exp((-1i*pi*z/(lambda*f^2))*(X.^2+Y.^2))));
-    phase = mod(angle(Efocus), 2*pi);     
-    E_in = abs(u_target).*exp(-1j*(phase));
-    E_inv = ifftshift(ifft2(ifftshift(E_in)));
-    Phase_hot = mod(angle(E_inv), 2*pi);
+%% Clear workspace, close all figures
+clear; clc; close all;
+
+%% Input Parameters
+M = 800; % SLM side length (pixels)
+N = 600; % SLM side height (pixels)
+psize = 20e-6; % Pixel size (meters)
+lambda = 1064e-9; % Laser wavelength (meters)
+
+%% Coordinate System
+x = ([0.5:1:M-0.5] - M/2) * psize;
+y = ([0.5:1:N-0.5] - N/2) * psize;
+[X, Y] = meshgrid(x, y);
+
+%% Input Beam Parameters
+w_beam = 250 * psize; % Radius of the input beam (pixels)
+u_in = circ(sqrt(X.^2 + Y.^2) / w_beam); % Input beam amplitude
+
+%% Display Input Beam Irradiance
+I_in = abs(u_in.^2); % Intensity of input beam
+figure(1), imagesc(x, y, I_in), colormap('gray');
+xlabel('x (m)'), ylabel('y (m)');
+axis xy;
+
+%% Generate Random Phase
+random_phase = 2 * pi * rand([N, M]); 
+
+%% Get Target Pattern from User
+num_spots = input('Enter the number of spots: ');
+spot_separation = input('Enter the inter-spot separation (pixels): ');
+u_target = generate_spot_pattern(M, N, num_spots, spot_separation * psize);
+
+%% Display Target Pattern
+I_target = abs(u_target.^2);
+figure(2), imagesc(x, y, I_target), colormap('gray');
+xlabel('x (m)'), ylabel('y (m)');
+axis xy;
+
+%% GS Algorithm Parameters
+focal_length = input('Enter focal length (pixels): '); % Focal length in pixels
+z_focus = 0; % Distance from focus
+num_iterations = input('Maximum number of iterations: ');
+
+%% GS Algorithm - Phase Retrieval
+k = 2 * pi / lambda; % Wave number
+[fx, fy] = meshgrid((1 / psize) * [-M/2:1:M/2-1] / M, (1 / psize) * [-N/2:1:N/2-1] / N);
+x1 = lambda * focal_length * fx;
+y1 = lambda * focal_length * fy;
+
+% Start iterations to retrieve phase mask
+Phase_hot = random_phase; % Initial random phase
+for iter = 1:num_iterations
+    Efocus = exp(1i * k * (2 * focal_length + z_focus + x1.^2 + y1.^2)) / (1i * lambda * focal_length) ...
+             .* fftshift(fft2(abs(u_in) .* exp(-1j * Phase_hot) .* exp((-1i * pi * z_focus / (lambda * focal_length^2)) * (X.^2 + Y.^2))));
+    phase_focus = mod(angle(Efocus), 2 * pi); 
+    E_target = abs(u_target) .* exp(-1j * phase_focus);
+    E_inverse = ifftshift(ifft2(ifftshift(E_target)));
+    Phase_hot = mod(angle(E_inverse), 2 * pi);
 end
+
+%% Generate Phase Mask for SLM
+final_phase_mask = mod(Phase_hot, 2 * pi);
+figure(3), imshow(mat2gray(final_phase_mask + 1.2 * pi)), axis equal tight off;
+
+%% Projecting Phase Mask onto SLM
+project_on_slm(final_phase_mask, M, N);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Generating the phase mask
-%phase_z = 2*pi*(x.^2 + y.^2).*z/(lambda*f^2);
-Phase = mod(Phase_hot, 2*pi);
-%Phase = Phase_hot;
-figure,
-imshow(mat2gray((Phase)+ 1.2*pi))%))%%
-%title('Phase Plot')
-axis equal tight off
-box off
-axis off
+% Function Definitions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Generating the resulaant image after introducing the 
-R = fftshift(ifft2(fftshift(exp(-1j*(angle(E_inv))))));
-figure; imshow(mat2gray(abs(R)));
-colorbar()
-%imshow(mat2gray(abs(I1)))
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%%Proojecting onto the spatial light modulator. 
-%%spatial light modulator SLM and the screen SCRNUM.
-%
-scrnum = 2; %Screen Number
-ScreenPos = get(0,'MonitorPositions');
-ScreenWidth = ScreenPos(scrnum,3)-ScreenPos(scrnum,1)+1;
-ScreenHeight = ScreenPos(scrnum,4)-ScreenPos(scrnum,2)+1;
-%
-%The size of the phase mask and of the screen should be the same       
-%
-if [M N]~=[ScreenHeight ScreenWidth]
-   warning('The size of the phase mask and of the screen should be the same.')
+
+function u_target = generate_spot_pattern(M, N, num_spots, separation)
+    % Generates a target pattern with multiple spots.
+    % Inputs:
+    %   M - SLM width in pixels
+    %   N - SLM height in pixels
+    %   num_spots - number of spots
+    %   separation - distance between spots in meters
+    %
+    % Outputs:
+    %   u_target - target amplitude pattern
+    
+    % Define the spot radius
+    spot_radius = 1 * 20e-6; % Example spot size
+    
+    % Initialize target pattern
+    u_target = zeros(N, M);
+    
+    % Place spots based on user input
+    for i = 1:num_spots
+        % Place the spot at a defined separation
+        x_center = M/2 + (i-1) * separation;
+        y_center = N/2 + (i-1) * separation;
+        
+        % Apply a circular spot with the defined radius
+        u_target = u_target + circ(sqrt((x_center - (1:M)).^2 + (y_center - (1:N)).^2) / spot_radius);
+    end
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%slmfig = hologram display figure
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-slmfig = figure( ...
-         'Name', 'SLM Screen', ...
-         'NumberTitle', 'off', ...
-         'MenuBar', 'none', ...
-         'ToolBar', 'none', ...
-         'Units', 'pixels', ...
-         'Resize', 'off', ...
-         'Position', [ScreenPos(scrnum,1) ScreenPos(scrnum,2) ScreenWidth ScreenHeight] ...
-          );
-axes('Units','Normalized','Position',[0,0,1,1],'Visible','off')
-figure(slmfig)
-cla %clear the axes
-image(Phase_hot/(2*pi)*255)
-axis equal tight off
-colormap(gray(255))
-drawnow()
-   
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%closes all figures but keeps hologram.          
-fh = findall(0,'type','figure').';
-close(fh(fh~=slmfig));
- 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%%%Uing the Matlab graphics
-%MATLAB defines the figure Position property as a vector.
-%[left bottom width height]
-%MATLAB does not measure the window border when placing the figure; the Position property defines only the internal active area of the figure window.
-%The figure's Units property determines the units of the values used to specify the position on the screen. Possible values for the Units property are.
-%set(gcf,'Units')
-%[ inches | centimeters | normalized | points | {pixels} | 
-%characters]
-%with pixels being the default.
-%
-%Determining Screen Size
-%get(0,'ScreenSize')
-%ans =
-%   1 1 1152 900
-%In this case, the screen is 1152 by 900 pixels. MATLAB returns the ScreenSize in the units determined by the root Units property. For example,
-%set(0,'Units','normalized')
-%normalizes the values returned by ScreenSize:
-%get(0,'ScreenSize')
-%ans =
-%    0 0 1 1
-%Defining the figure Position in terms of the ScreenSize in normalized units makes the specification independent of variations in screen size. This is useful if you are writing an M-file that is to be used on different computer systems.
+
+function project_on_slm(phase_mask, M, N)
+    % Projects the phase mask onto a Spatial Light Modulator (SLM).
+    % Inputs:
+    %   phase_mask - calculated phase mask
+    %   M - SLM width in pixels
+    %   N - SLM height in pixels
+    
+    % Determine monitor setup
+    scrnum = 2; % Assuming the SLM is the second monitor
+    ScreenPos = get(0, 'MonitorPositions');
+    ScreenWidth = ScreenPos(scrnum, 3) - ScreenPos(scrnum, 1) + 1;
+    ScreenHeight = ScreenPos(scrnum, 4) - ScreenPos(scrnum, 2) + 1;
+    
+    % Ensure screen size matches SLM size
+    if [M, N] ~= [ScreenHeight, ScreenWidth]
+        warning('The size of the phase mask and screen must match!');
+    end
+    
+    % Create figure for SLM display
+    slmfig = figure('Name', 'SLM Screen', 'NumberTitle', 'off', 'MenuBar', 'none', ...
+                    'ToolBar', 'none', 'Units', 'pixels', 'Resize', 'off', ...
+                    'Position', [ScreenPos(scrnum, 1), ScreenPos(scrnum, 2), ScreenWidth, ScreenHeight]);
+    axes('Units', 'Normalized', 'Position', [0, 0, 1, 1], 'Visible', 'off');
+    image(phase_mask / (2 * pi) * 255);
+    axis equal tight off;
+    colormap(gray(255));
+    drawnow();
+    
+    % Close other figures, keep only SLM display
+    fh = findall(0, 'type', 'figure').';
+    close(fh(fh ~= slmfig));
+end

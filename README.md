@@ -70,7 +70,7 @@ While using this code, ensure that all the `.m` files are together.
 
 - **Phase Mask**: The generated phase mask is displayed in grayscale. The varying intensities represent the phase shifts needed to shape the beam into the target intensity pattern.
 - **Intensity Pattern**: The resulting intensity pattern after applying the phase mask is shown, demonstrating the ability to shape light.
-- 
+
 The SLM projection part of this code is based on the `ots1.0.1` toolkit written by Volpe et al.
 
 ---

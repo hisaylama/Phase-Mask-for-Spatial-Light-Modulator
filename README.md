@@ -14,19 +14,11 @@ This computer-generated digital hologram is projected onto the spatial light mod
 - **Random Phase Initialization**: Random phase is applied initially for phase retrieval.
 
 ## How it Works
-
-1. **Input Beam Definition**: 
-   - The input beam is circular with a defined radius.
-   - It is represented as an amplitude field.
-  
-2. **Gerchberg-Saxton Algorithm**: 
-   - The phase of the input beam is initialized randomly.
-   - The algorithm iteratively computes the phase mask by forward propagating the wave through Fourier space and adjusting the phase in each iteration to match the desired intensity pattern.
    
-3. **Phase Mask Generation**: 
-   - The phase mask generated from the algorithm is displayed and can be used for projection onto an SLM.
-
-4. **Projection onto SLM**: 
+   **Phase Mask Generation**: 
+   - The phase mask generated using the Gerchberg-Saxton Algorithm, generates a digital hologram and is projected onto an SLM.
+   
+   **Projection onto SLM**: 
    - The generated phase mask is projected onto the SLM. The resolution of the SLM must match the size of the generated phase mask.
    - The phase mask is displayed full-screen on the secondary monitor to simulate projection onto the SLM.
 

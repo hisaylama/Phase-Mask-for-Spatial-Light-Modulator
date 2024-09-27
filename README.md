@@ -23,35 +23,27 @@ This computer-generated digital hologram is projected onto the spatial light mod
    - The phase mask is displayed full-screen on the secondary monitor to simulate projection onto the SLM.
 
 ## Usage
-
-1. **Input Beam**: 
+**Input Beam**: 
    - Modify the radius and position of the input beam as needed by editing the code in the input beam section.
-
-2. **Target Image**:
+**Target Image**:
    - You will be prompted to enter the number of spots and their separation when running the code.
    - This creates a custom intensity pattern for the algorithm to shape.
-
-3. **Iterations**:
+**Iterations**:
    - Enter the desired number of iterations for the Gerchberg-Saxton algorithm. Typically, more iterations yield a more accurate phase mask.
-
-4. **Projection**:
+**Projection**:
    - Ensure that the SLM resolution matches the size of the generated phase mask (typically set to match the resolution of the secondary monitor).
    - The phase mask will be displayed on the secondary monitor (SLM screen).
 
 ## Instructions
 
-1. Clone this repository:
+- Clone this repository:
    ```bash
    git clone https://github.com/hisaylama/gerchberg-saxton-slm.git
    ```
-
-2. Open the MATLAB script in your MATLAB environment.
-
-3. Run the script. You will be prompted for input values such as the number of spots, separation, focal length, and the number of iterations.
-
-4. The phase mask will be generated and displayed. If an SLM is connected, the phase mask will be projected onto the SLM.
-
-5. The result can be visualized on your SLM or secondary monitor.
+- Open the MATLAB script in your MATLAB environment.
+- Run the script. You will be prompted for input values such as the number of spots, separation, focal length, and the number of iterations.
+-  The phase mask will be generated and displayed. If an SLM is connected, the phase mask will be projected onto the SLM.
+- The result can be visualized on your SLM or secondary monitor.
 
 ## Requirements
 
